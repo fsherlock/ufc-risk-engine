@@ -14,14 +14,25 @@
       const strategyAllocations = { Kelly: 100, "Equal Stake": 100, YOLO: 100, Singles: 100 };
       let lastStrategies = null;
 
-      // Helper: Convert American to Decimal
-      function americanToDecimal(odds) {
-        if (!odds) return 0;
-        const o = parseInt(odds, 10);
+           // Helper: Parse Odds (Decimal or American) to Decimal
+      function parseOddsToDecimal(val) {
+        if (!val) return 0;
+        const o = parseFloat(val);
         if (isNaN(o)) return 0;
-        if (o > 0) return o / 100 + 1;
-        return 100 / Math.abs(o) + 1;
+        
+        // American Negative (e.g. -150) -> 1 + (100 / 150) = 1.66
+        if (o <= -100) return 1 + (100 / Math.abs(o));
+        
+        // American Positive (e.g. +150) -> 1 + (150 / 100) = 2.50
+        if (o >= 100) return 1 + (o / 100);
+        
+        // Decimal (e.g. 1.91)
+        if (o > 1) return o;
+        
+        return 0; // Invalid
       }
+
+      // Helper: Convert Decimal to American (for display if needed)
       // Helper: Convert Decimal to American (for display if needed)
       function toAmerican(dec) {
         if (dec >= 2) return "+" + Math.round((dec - 1) * 100);
