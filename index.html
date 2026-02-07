@@ -78,6 +78,7 @@
             <div class="p-5 sm:p-6 grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div>
                 <label class="block text-sm mb-2">Number of Fights</label>
+                <!-- Change: Cap fights at 5 to match small-count constraint -->
                 <input id="fightCount" type="number" min="1" max="5" value="3" class="w-full rounded-lg bg-white/5 border border-white/10 px-3 py-2 outline-none focus:ring-2 focus:ring-red-500 input-glow" />
                 <p id="fightCountError" class="mt-2 text-xs text-red-400 hidden"></p>
               </div>
@@ -195,8 +196,11 @@
                   <span class="confidence-value font-mono text-slate-200">75%</span>
                 </label>
                 <div class="relative h-2 bg-slate-800 rounded-full mb-1 overflow-hidden">
+                   <!-- Edge Bar Background -->
                    <div class="absolute top-0 left-0 h-full bg-slate-700 w-full opacity-20"></div>
+                   <!-- Implied Prob Marker (White Line) -->
                    <div class="implied-marker absolute top-0 bottom-0 w-0.5 bg-white z-10 hidden" title="Implied Probability"></div>
+                   <!-- Confidence Fill -->
                    <div class="confidence-fill absolute top-0 left-0 h-full bg-slate-500 transition-all duration-300" style="width: 75%"></div>
                 </div>
                 <input type="range" min="50" max="100" value="75" class="fighter-confidence w-full accent-slate-500 opacity-0 absolute inset-0 cursor-pointer z-20 h-6 -mt-4" />
@@ -209,9 +213,12 @@
               </div>
               </div>
             </div>
+
+            <!-- VS Badge -->
             <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center rounded-full bg-slate-800 border border-white/10 z-10 shadow-xl pointer-events-none">
               <span class="text-[10px] font-bold text-slate-500">VS</span>
             </div>
+
             <div class="rounded-xl border border-white/10 bg-white/5 fight-card">
               <div class="p-6 space-y-3">
                 <div>
@@ -241,8 +248,11 @@
                   <span class="confidence-value font-mono text-slate-200">75%</span>
                 </label>
                 <div class="relative h-2 bg-slate-800 rounded-full mb-1 overflow-hidden">
+                   <!-- Edge Bar Background -->
                    <div class="absolute top-0 left-0 h-full bg-slate-700 w-full opacity-20"></div>
+                   <!-- Implied Prob Marker (White Line) -->
                    <div class="implied-marker absolute top-0 bottom-0 w-0.5 bg-white z-10 hidden" title="Implied Probability"></div>
+                   <!-- Confidence Fill -->
                    <div class="confidence-fill absolute top-0 left-0 h-full bg-slate-500 transition-all duration-300" style="width: 75%"></div>
                 </div>
                 <input type="range" min="50" max="100" value="75" class="fighter-confidence w-full accent-slate-500 opacity-0 absolute inset-0 cursor-pointer z-20 h-6 -mt-4" />
@@ -256,9 +266,12 @@
               </div>
             </div>
           </div>
+          
+          <!-- Tale of the Tape Visualization -->
           <div class="tale-of-the-tape hidden mt-6 pt-6 border-t border-white/10">
              <h4 class="text-xs font-bold uppercase tracking-wider text-slate-500 text-center mb-4">Tale of the Tape</h4>
              <div class="grid grid-cols-1 gap-4 text-xs font-mono">
+                <!-- Reach Comparison -->
                 <div class="tape-row flex items-center gap-3">
                    <div class="flex-1 text-right text-slate-300 val-a-reach"></div>
                    <div class="w-1/2 flex items-center gap-1 bg-slate-800/50 rounded-full h-4 relative overflow-hidden">
@@ -269,6 +282,8 @@
                    <div class="flex-1 text-left text-slate-300 val-b-reach"></div>
                 </div>
                 <div class="text-center text-[10px] text-slate-500 -mt-3">Reach</div>
+
+                <!-- Height Comparison -->
                 <div class="tape-row flex items-center gap-3">
                    <div class="flex-1 text-right text-slate-300 val-a-height"></div>
                    <div class="w-1/2 flex items-center gap-1 bg-slate-800/50 rounded-full h-4 relative overflow-hidden">
@@ -279,6 +294,8 @@
                    <div class="flex-1 text-left text-slate-300 val-b-height"></div>
                 </div>
                 <div class="text-center text-[10px] text-slate-500 -mt-3">Height</div>
+
+                <!-- Win Rate Comparison -->
                 <div class="tape-row flex items-center gap-3">
                    <div class="flex-1 text-right text-slate-300 val-a-win"></div>
                    <div class="w-1/2 flex items-center gap-1 bg-slate-800/50 rounded-full h-4 relative overflow-hidden">
