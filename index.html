@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>UFC MarX Risk Engine</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0b0f16">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&family=Kanit:ital,wght@0,900;1,900&display=swap" rel="stylesheet" />
+    <script>
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            fontFamily: {
+              sans: ['Inter', 'sans-serif'],
+              mono: ['"JetBrains Mono"', 'monospace'],
+              ufc: ['Kanit', 'sans-serif'],
+            },
+            colors: {
+              surface: "#0b0f16",
+              glass: "rgba(255,255,255,0.08)",
+              accent: "#ef4444",
+              accentLight: "#f87171",
+              accentDark: "#b91c1c",
+              greenGlow: "#16a34a",
+              yellowGlow: "#f59e0b",
+            },
+            boxShadow: {
+              glow: "0 0 20px rgba(239,113,113,0.15)",
+            },
+            backdropBlur: {
+              xs: "2px",
+            },
+          },
+        },
+      };
+    </script>
+    <link rel="stylesheet" href="css/style.css">
+  </head>
+  <body class="min-h-screen bg-gray-950 text-slate-100 custom-scrollbar relative selection:bg-red-500/30">
+    <div id="intro-screen" class="fixed inset-0 z-[100] bg-[#0b0f16] flex items-center justify-center transition-opacity duration-700">
+      <div class="text-center relative">
+        <h1 class="text-6xl md:text-9xl font-black tracking-tighter text-white glitch-text select-none" data-text="UFC">UFC</h1>
+        <div class="h-1 bg-red-600 mt-4 mx-auto rounded-full animate-loader"></div>
+      </div>
+    </div>
+    <div class="bg-noise"></div>
+    <div class="fixed inset-0 -z-10 pointer-events-none">
+      <div class="absolute top-0 left-1/4 w-96 h-96 bg-red-600/10 rounded-full blur-3xl"></div>
+      <div class="absolute bottom-0 right-1/4 w-96 h-96 bg-red-900/10 rounded-full blur-3xl"></div>
+      <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-red-900/5 rounded-full blur-3xl"></div>
+      <canvas id="bgParticles" class="absolute inset-0 w-full h-full"></canvas>
+    </div>
+    <header class="px-4 sm:px-6 lg:px-8 py-6 sticky top-0 z-50 bg-[#0b0f16]/80 backdrop-blur-md border-b border-white/5 shadow-lg cursor-pointer transition-colors hover:bg-[#0b0f16]/95" onclick="window.scrollTo({top: 0, behavior: 'smooth'})">
+      <div class="max-w-7xl mx-auto flex items-center justify-between">
+        <div class="flex items-center gap-4">
+          <img src="https://upload.wikimedia.org/wikipedia/commons/9/92/UFC_Logo.svg" alt="UFC Logo" class="h-8 w-auto object-contain filter drop-shadow-lg" />
+          <h1 class="text-2xl sm:text-3xl font-black tracking-tighter italic flex items-baseline gap-2">
+            <span class="font-ufc uppercase gradient-text">MarX</span> <span class="text-white not-italic font-extrabold tracking-tight text-lg sm:text-xl opacity-90">Risk Engine</span>
+          </h1>
+        </div>
+      </div>
+    </header>
+    <main class="px-4 sm:px-6 lg:px-8 pb-20">
+      <section class="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <div class="lg:col-span-8 space-y-6">
+          <div class="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-md shadow-glow">
+            <div class="p-5 sm:p-6 border-b border-white/10 flex items-center justify-between">
+              <h2 class="text-lg font-extrabold gradient-text">Configuration</h2>
+              <button id="resetBtn" class="text-xs px-3 py-1 rounded-md bg-white/5 hover:bg-white/10 border border-white/10 neon-button">Reset</button>
+            </div>
+            <div class="p-5 sm:p-6 grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div>
+                <label class="block text-sm mb-2">Number of Fights</label>
+                <input id="fightCount" type="number" min="1" max="5" value="3" class="w-full rounded-lg bg-white/5 border border-white/10 px-3 py-2 outline-none focus:ring-2 focus:ring-red-500 input-glow" />
+                <p id="fightCountError" class="mt-2 text-xs text-red-400 hidden"></p>
+              </div>
+              <div>
+                <label class="block text-sm mb-2">Bankroll</label>
+                <input id="bankroll" type="number" min="1" step="0.01" value="1000" class="w-full rounded-lg bg-white/5 border border-white/10 px-3 py-2 outline-none focus:ring-2 focus:ring-red-500 input-glow" />
+                <p id="bankrollError" class="mt-2 text-xs text-red-400 hidden"></p>
+              </div>
+              <div class="flex items-end">
+                <button id="buildBtn" class="w-full rounded-lg bg-red-600 hover:bg-red-500 transition border border-red-400/30 px-4 py-2 neon-button">
+                  Build Fights
+                </button>
+              </div>
+              <div class="sm:col-span-3 flex flex-wrap items-center gap-6">
+                <label class="flex items-center gap-2 text-sm">
+                  <input id="mcToggle" type="checkbox" class="accent-red-500">
+                  Monte Carlo mode (10,000 trials)
+                </label>
+                <label class="flex items-center gap-2 text-sm cursor-pointer group">
+                  <div class="relative">
+                    <input id="oddsFormatToggle" type="checkbox" class="sr-only peer">
+                    <div class="w-9 h-5 bg-white/10 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-slate-400 after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-red-600 peer-checked:after:bg-white"></div>
+                  </div>
+                  <span id="oddsFormatLabel" class="group-hover:text-white transition-colors">Decimal Odds</span>
+                </label>
+                <span id="truncWarn" class="text-xs text-orange-400"></span>
+              </div>
+            </div>
+          </div>
+          <div id="fightsContainer" class="grid grid-cols-1 gap-4 md:gap-6 min-h-[200px]">
+            <div class="w-full flex flex-col items-center justify-center py-12 text-slate-500 border-2 border-dashed border-white/10 rounded-2xl bg-white/5 backdrop-blur-sm">
+              <div class="w-16 h-16 mb-4 rounded-full bg-white/5 flex items-center justify-center shadow-inner">
+                <svg class="w-8 h-8 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 4v16m8-8H4" />
+                </svg>
+              </div>
+              <p class="text-base font-medium text-slate-300">Ready to Configure</p>
+              <p class="text-sm mt-1 opacity-60">Set fights & bankroll above, then click Build</p>
+            </div>
+          </div>
+          <div class="mt-4 flex flex-wrap items-center gap-3">
+            <button id="calcBtn" disabled class="rounded-xl px-5 py-3 bg-white/10 border border-white/10 text-slate-200 cursor-not-allowed neon-button" title="Build fights and fix errors to calculate">
+              Calculate Strategies
+            </button>
+            <button id="exportBtn" disabled class="rounded-xl px-4 py-2 bg-white/5 border border-white/10 text-slate-200 neon-button" title="Run Calculate Strategies first">Export PDF</button>
+            <div class="flex flex-col sm:flex-row sm:items-center gap-2">
+              <p id="calcError" class="text-sm text-red-400"></p>
+              <span id="loadingMsg" class="text-sm text-slate-400"></span>
+            </div>
+          </div>
+          <div id="resultsContainer" class="space-y-8"></div>
+        </div>
+        <aside class="space-y-6 lg:sticky lg:top-6 lg:col-span-4">
+          <div class="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-md shadow-glow">
+            <div class="p-5 sm:p-6 border-b border-white/10">
+              <h2 class="text-lg font-extrabold gradient-text">Risk Summary</h2>
+              <p class="text-xs text-slate-400">Computed per strategy</p>
+            </div>
+            <div id="riskSummary" class="p-5 sm:p-6 space-y-6"></div>
+          </div>
+          <div class="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-md shadow-glow">
+            <div class="p-5 sm:p-6">
+              <h2 class="text-lg font-medium">Notes</h2>
+              <ul class="mt-3 text-sm text-slate-300 space-y-2">
+                <li>Strict validation on all inputs</li>
+                <li>Fractional Kelly sizing at 0.25 (25% Kelly)</li>
+                <li>Cap total allocation at 100%</li>
+                <li>YOLO uses 100% on highest odds</li>
+                <li>Parlays assume approximate independence across strategies</li>
+              </ul>
+            </div>
+          </div>
+        </aside>
+      </section>
+    </main>
+    <template id="fightTemplate">
+      <div class="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-md shadow-glow w-full">
+        <div class="p-5 sm:p-6 border-b border-white/10 flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <div class="h-8 w-8 rounded-full bg-slate-700/50 border border-slate-600/30 flex items-center justify-center">
+              <span class="text-xs font-mono text-slate-400">#<span class="fightIndex"></span></span>
+            </div>
+            <h3 class="text-base font-medium">Fight <span class="fightIndex"></span></h3>
+          </div>
+          <div class="text-xs text-slate-400">Configure both fighters</div>
+        </div>
+        <div class="p-5 sm:p-6 relative">
+          <div class="grid grid-cols-2 md:grid-cols-2 gap-3 sm:gap-6">
+            <div class="rounded-xl border border-white/10 bg-white/5 fight-card">
+              <div class="p-6 space-y-3">
+                <div>
+                  <label class="block text-xs mb-1 text-slate-400">Fighter A Name</label>
+                  <input type="text" class="fighter-name w-full rounded-lg bg-white/5 border border-white/10 px-3 py-2 outline-none focus:ring-2 focus:ring-slate-500 input-glow font-mono text-sm" placeholder="Fighter A" />
+                  <p class="error-name mt-1 text-xs text-rose-400 hidden"></p>
+                </div>
+                <div class="grid grid-cols-1 xl:grid-cols-2 gap-3">
+                  <div>
+                    <label class="block text-xs mb-1 text-slate-400">Decimal Odds</label>
+                    <input type="number" step="0.01" min="1.01" class="fighter-odds w-full rounded-lg bg-white/5 border border-white/10 px-3 py-2 outline-none focus:ring-2 focus:ring-slate-500 input-glow font-mono text-sm" placeholder="1.80" />
+                    <p class="error-odds mt-1 text-xs text-rose-400 hidden"></p>
+                    <p class="mt-1 text-[11px] text-slate-500 font-mono fighter-meta">Implied: —</p>
+                  </div>
+                  <div>
+                    <label class="block text-xs mb-1 text-slate-400">Status</label>
+                    <select class="fighter-status w-full rounded-lg bg-white/5 border border-white/10 px-3 py-2 outline-none focus:ring-2 focus:ring-slate-500 input-glow text-sm">
+                      <option value="neutral">Neutral</option>
+                      <option value="lock">🔒 LOCK</option>
+                      <option value="fade">⚠️ FADE</option>
+                    </select>
+                  </div>
+                </div>
+              <div>
+                <label class="block text-xs mb-2 text-slate-400 flex justify-between">
+                  <span>Confidence</span>
+                  <span class="confidence-value font-mono text-slate-200">75%</span>
+                </label>
+                <div class="relative h-2 bg-slate-800 rounded-full mb-1 overflow-hidden">
+                   <div class="absolute top-0 left-0 h-full bg-slate-700 w-full opacity-20"></div>
+                   <div class="implied-marker absolute top-0 bottom-0 w-0.5 bg-white z-10 hidden" title="Implied Probability"></div>
+                   <div class="confidence-fill absolute top-0 left-0 h-full bg-slate-500 transition-all duration-300" style="width: 75%"></div>
+                </div>
+                <input type="range" min="50" max="100" value="75" class="fighter-confidence w-full accent-slate-500 opacity-0 absolute inset-0 cursor-pointer z-20 h-6 -mt-4" />
+                <div class="flex justify-between text-[10px] text-slate-500 font-mono mt-1">
+                  <span>50%</span>
+                  <span class="edge-display text-slate-400">0% Edge</span>
+                  <span>100%</span>
+                </div>
+                <p class="error-confidence mt-1 text-xs text-rose-400 hidden"></p>
+              </div>
+              </div>
+            </div>
+            <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center rounded-full bg-slate-800 border border-white/10 z-10 shadow-xl pointer-events-none">
+              <span class="text-[10px] font-bold text-slate-500">VS</span>
+            </div>
+            <div class="rounded-xl border border-white/10 bg-white/5 fight-card">
+              <div class="p-6 space-y-3">
+                <div>
+                  <label class="block text-xs mb-1 text-slate-400">Fighter B Name</label>
+                  <input type="text" class="fighter-name w-full rounded-lg bg-white/5 border border-white/10 px-3 py-2 outline-none focus:ring-2 focus:ring-slate-500 input-glow font-mono text-sm" placeholder="Fighter B" />
+                  <p class="error-name mt-1 text-xs text-rose-400 hidden"></p>
+                </div>
+                <div class="grid grid-cols-1 xl:grid-cols-2 gap-3">
+                  <div>
+                    <label class="block text-xs mb-1 text-slate-400">Decimal Odds</label>
+                    <input type="number" step="0.01" min="1.01" class="fighter-odds w-full rounded-lg bg-white/5 border border-white/10 px-3 py-2 outline-none focus:ring-2 focus:ring-slate-500 input-glow font-mono text-sm" placeholder="2.10" />
+                    <p class="error-odds mt-1 text-xs text-rose-400 hidden"></p>
+                    <p class="mt-1 text-[11px] text-slate-500 font-mono fighter-meta">Implied: —</p>
+                  </div>
+                  <div>
+                    <label class="block text-xs mb-1 text-slate-400">Status</label>
+                    <select class="fighter-status w-full rounded-lg bg-white/5 border border-white/10 px-3 py-2 outline-none focus:ring-2 focus:ring-slate-500 input-glow text-sm">
+                      <option value="neutral">Neutral</option>
+                      <option value="lock">🔒 LOCK</option>
+                      <option value="fade">⚠️ FADE</option>
+                    </select>
+                  </div>
+                </div>
+              <div>
+                <label class="block text-xs mb-2 text-slate-400 flex justify-between">
+                  <span>Confidence</span>
+                  <span class="confidence-value font-mono text-slate-200">75%</span>
+                </label>
+                <div class="relative h-2 bg-slate-800 rounded-full mb-1 overflow-hidden">
+                   <div class="absolute top-0 left-0 h-full bg-slate-700 w-full opacity-20"></div>
+                   <div class="implied-marker absolute top-0 bottom-0 w-0.5 bg-white z-10 hidden" title="Implied Probability"></div>
+                   <div class="confidence-fill absolute top-0 left-0 h-full bg-slate-500 transition-all duration-300" style="width: 75%"></div>
+                </div>
+                <input type="range" min="50" max="100" value="75" class="fighter-confidence w-full accent-slate-500 opacity-0 absolute inset-0 cursor-pointer z-20 h-6 -mt-4" />
+                <div class="flex justify-between text-[10px] text-slate-500 font-mono mt-1">
+                  <span>50%</span>
+                  <span class="edge-display text-slate-400">0% Edge</span>
+                  <span>100%</span>
+                </div>
+                <p class="error-confidence mt-1 text-xs text-rose-400 hidden"></p>
+              </div>
+              </div>
+            </div>
+          </div>
+          <div class="tale-of-the-tape hidden mt-6 pt-6 border-t border-white/10">
+             <h4 class="text-xs font-bold uppercase tracking-wider text-slate-500 text-center mb-4">Tale of the Tape</h4>
+             <div class="grid grid-cols-1 gap-4 text-xs font-mono">
+                <div class="tape-row flex items-center gap-3">
+                   <div class="flex-1 text-right text-slate-300 val-a-reach"></div>
+                   <div class="w-1/2 flex items-center gap-1 bg-slate-800/50 rounded-full h-4 relative overflow-hidden">
+                      <div class="bar-a h-full bg-red-500/80 absolute right-1/2 transition-all duration-500" style="width: 0%"></div>
+                      <div class="w-px h-full bg-white/20 absolute left-1/2 z-10"></div>
+                      <div class="bar-b h-full bg-blue-500/80 absolute left-1/2 transition-all duration-500" style="width: 0%"></div>
+                   </div>
+                   <div class="flex-1 text-left text-slate-300 val-b-reach"></div>
+                </div>
+                <div class="text-center text-[10px] text-slate-500 -mt-3">Reach</div>
+                <div class="tape-row flex items-center gap-3">
+                   <div class="flex-1 text-right text-slate-300 val-a-height"></div>
+                   <div class="w-1/2 flex items-center gap-1 bg-slate-800/50 rounded-full h-4 relative overflow-hidden">
+                      <div class="bar-a h-full bg-red-500/80 absolute right-1/2 transition-all duration-500" style="width: 0%"></div>
+                      <div class="w-px h-full bg-white/20 absolute left-1/2 z-10"></div>
+                      <div class="bar-b h-full bg-blue-500/80 absolute left-1/2 transition-all duration-500" style="width: 0%"></div>
+                   </div>
+                   <div class="flex-1 text-left text-slate-300 val-b-height"></div>
+                </div>
+                <div class="text-center text-[10px] text-slate-500 -mt-3">Height</div>
+                <div class="tape-row flex items-center gap-3">
+                   <div class="flex-1 text-right text-slate-300 val-a-win"></div>
+                   <div class="w-1/2 flex items-center gap-1 bg-slate-800/50 rounded-full h-4 relative overflow-hidden">
+                      <div class="bar-a h-full bg-red-500/80 absolute right-1/2 transition-all duration-500" style="width: 0%"></div>
+                      <div class="w-px h-full bg-white/20 absolute left-1/2 z-10"></div>
+                      <div class="bar-b h-full bg-blue-500/80 absolute left-1/2 transition-all duration-500" style="width: 0%"></div>
+                   </div>
+                   <div class="flex-1 text-left text-slate-300 val-b-win"></div>
+                </div>
+                <div class="text-center text-[10px] text-slate-500 -mt-3">Win Rate</div>
+             </div>
+          </div>
+        </div>
+      </div>
+    </template>
+    <script src="js/data.js"></script>
+    <script src="js/app.js"></script>
+  </body>
+</html>
