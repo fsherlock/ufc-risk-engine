@@ -1,4 +1,4 @@
-      const buildBtn = document.getElementById("buildBtn");
+       const buildBtn = document.getElementById("buildBtn");
       const calcBtn = document.getElementById("calcBtn");
       const resetBtn = document.getElementById("resetBtn");
       const exportBtn = document.getElementById("exportBtn");
@@ -184,6 +184,30 @@
           // Let's rely on the `dataset.stats` we attached to the autocomplete item.
           // But that item is gone. We need to store selected fighter stats on the CARD itself.
       }
+      // --- SOUND EFFECTS ---
+      const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      function playClickSound() {
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(800, audioCtx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(300, audioCtx.currentTime + 0.1);
+        gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.1);
+      }
+
+      // Attach sound to all buttons
+      document.addEventListener('click', (e) => {
+          if (e.target.tagName === 'BUTTON' || e.target.closest('button') || e.target.classList.contains('autocomplete-item')) {
+              playClickSound();
+          }
+      });
+
       // --- PREDICTION ENGINE END ---
 
       // --- API INTEGRATION START ---
@@ -789,7 +813,11 @@
               
               valDisplay.textContent = conf + "%";
               fill.style.width = conf + "%";
-              fill.className = `confidence-fill absolute top-0 left-0 h-full transition-all duration-300 ${conf > 80 ? 'bg-green-500' : conf > 60 ? 'bg-yellow-500' : 'bg-slate-500'}`;
+              
+              // Dynamic Color based on Confidence
+              if (conf >= 80) fill.className = "confidence-fill absolute top-0 left-0 h-full transition-all duration-300 bg-green-500 shadow-[0_0_10px_rgba(34,197,94,0.5)]";
+              else if (conf >= 60) fill.className = "confidence-fill absolute top-0 left-0 h-full transition-all duration-300 bg-yellow-500 shadow-[0_0_10px_rgba(234,179,8,0.5)]";
+              else fill.className = "confidence-fill absolute top-0 left-0 h-full transition-all duration-300 bg-slate-500";
               
               if (!isNaN(odds) && odds > 1) {
                   const implied = (1 / odds) * 100;
@@ -799,8 +827,13 @@
                   
                   // Calculate Edge: (Conf - Implied)
                   const edge = conf - implied;
-                  edgeDisplay.textContent = `${edge > 0 ? "+" : ""}${edge.toFixed(1)}% Edge`;
-                  edgeDisplay.className = `edge-display text-[10px] ${edge > 5 ? 'text-green-400 font-bold' : edge < -5 ? 'text-red-400' : 'text-slate-400'}`;
+                  const edgeText = `${edge > 0 ? "+" : ""}${edge.toFixed(1)}% Edge`;
+                  edgeDisplay.textContent = edgeText;
+                  
+                  if (edge > 5) edgeDisplay.className = "edge-display text-[10px] text-green-400 font-bold animate-pulse";
+                  else if (edge < -5) edgeDisplay.className = "edge-display text-[10px] text-red-400";
+                  else edgeDisplay.className = "edge-display text-[10px] text-slate-400";
+                  
               } else {
                   meta.textContent = "Implied: —";
                   marker.classList.add("hidden");
